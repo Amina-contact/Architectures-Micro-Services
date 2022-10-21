@@ -7,3 +7,5 @@ Mise en oeuvre d'une application distribuée basée sur deux micro-services en u
   - Communication entre micro-services en utilisant OpenFeign
   - Spring Cloud Gateway
   - Eureka Discovery Service
+# Bank-Account-Service
+Premier Micro-service avec REST API et GraphQL API.
