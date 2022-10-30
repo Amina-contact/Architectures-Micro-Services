@@ -9,5 +9,15 @@ Mise en oeuvre d'une application distribuée basée sur deux micro-services en u
   - Eureka Discovery Service
   
 Déployer des microservices de démarrage à ressort dans un conteneur docker, et orchestrer ce conteneur docker à l'aide de docker compose pour exécuter plusieurs microservices sur un seul réseau, principalement pour permettre des communications de service à service.
+# Devoir 2 :Web services SOAP, WSDL, UDDI avec JAXWS
+1. Créer un Web service qui permet de : 
+    - Convertir un montant de l’auro en DH
+    - Consulter un Compte
+    - Consulter une Liste de comptes
+2. Déployer le Web service avec un simple Serveur JaxWS
+3. Consulter et analyser le WSDL avec un Browser HTTP
+4. Tester les opérations du web service avec un outil
+   - comme SoapUI ou Oxygen
+5. Créer un Client SOAP Java
 # Bank-Account-Service
 Premier Micro-service avec REST API et GraphQL API.
