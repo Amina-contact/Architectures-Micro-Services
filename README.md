@@ -19,5 +19,16 @@ Déployer des microservices de démarrage à ressort dans un conteneur docker, e
 4. Tester les opérations du web service avec un outil
    - comme SoapUI ou Oxygen
 5. Créer un Client SOAP Java
+# Devoir 3 :Architectures Micro services avec (Spring Cloud Config, Consul Discovery, Consul Config,Vault)
+Créer une application de e-commerce basée sur les micro services :
+1. Consul Discovery
+2. Spring Cloud Config
+3. Spring Cloud Gateway
+4. Customer-service
+5. Inventory Service
+6. Order Service
+7. Consul Config (Billing Service)
+8. Vault (Billing Service)
+9. Frontend Web avec Angular
 # Bank-Account-Service
 Premier Micro-service avec REST API et GraphQL API.
