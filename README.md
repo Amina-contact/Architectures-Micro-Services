@@ -30,5 +30,24 @@ Créer une application de e-commerce basée sur les micro services :
 7. Consul Config (Billing Service)
 8. Vault (Billing Service)
 9. Frontend Web avec Angular
+# Devoir 4:Sécurité des micro services avec Keycloak
+Partie 1 : 
+1. Télécharger Keycloak 19
+2. Démarrer Keycloak
+3. Créer un compte Admin
+4. Créer une Realm
+5. Créer un client à sécuriser
+6. Créer des utilisateurs
+7. Créer des rôles
+8. Affecter les rôles aux utilisateurs
+9. Avec PostMan :
+    - Tester l'authentification avec le mot de passe
+    - Analyser les contenus des deux JWT Access Token et Refresh Token
+    - Tester l'authentification avec le Refresh Token
+    - Tester l'authentification avec Client ID et Client Secret
+    - Changer les paramètres des Tokens Access Token et Refresh Token
+
+Partie  2 :
+   -Sécuriser L'architecture Micro services Du projet Customer-service, Inventory-service et Order-service
 # Bank-Account-Service
 Premier Micro-service avec REST API et GraphQL API.
