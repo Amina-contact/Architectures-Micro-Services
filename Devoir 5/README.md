@@ -380,6 +380,7 @@ public interface OperationRepository extends JpaRepository<Operation,Long> {
 </code></pre>
 <li>Services</strong>:</li>
 <li>AccountServiceHandler</strong>:</li>
+<pre class="notranslate"><code>
 public class AccountServiceHandler {
     private AccountRepository accountRepository;
     private OperationRepository operationRepository;
@@ -402,7 +403,6 @@ public class AccountServiceHandler {
         account.setAccountStatus(accountActivatedEvent.getAccountStatus());
         accountRepository.save(account);
     }
-
     @EventHandler
     public void on(AccountDebitedEvent accountDebitedEvent){
         log.info("AccountDebitedEvent ");
