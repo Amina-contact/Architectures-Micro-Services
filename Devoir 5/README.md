@@ -277,7 +277,6 @@ public class AccountAggregate {
     }
     @CommandHandler
     public void handle(CreditAccountCommand creditAccountCommand){
-
         if(creditAccountCommand.getCreditAmount() <= 100) throw new InsufficientCreditAmount("Credit Amount lower than 100");
         AggregateLifecycle.apply(new AccountCreditedEvent(
                 creditAccountCommand.getId(),
@@ -290,7 +289,6 @@ public class AccountAggregate {
     public void on(AccountCreditedEvent accountCreditedEvent){
         this.balance += accountCreditedEvent.getAmount();
     }
-
     @CommandHandler
     public void handler(DebitAccountCommand debitAccountCommand){
         if(debitAccountCommand.getDebitAmount() < 0) throw new InsufficientCreditAmount("Amount can't be negative");
@@ -302,7 +300,6 @@ public class AccountAggregate {
                 new Date()
         ));
     }
-
     @EventSourcingHandler
     public void on(AccountDebitedEvent accountDebitedEvent){
         this.balance -= accountDebitedEvent.getAmount();
