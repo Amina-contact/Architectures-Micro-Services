@@ -339,3 +339,157 @@ public class AccountAggregate {
 <p align="center">
   <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/TestDebit2.JPG">
 </p>
+<h3>Query : </h3>
+<li>Entities</strong>:</li>
+<li>Entity Account</strong>:</li>
+<pre class="notranslate"><code>
+public class Account {
+    @Id
+    private String id;
+    private String currency;
+    private double balance;
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @OneToMany(mappedBy = "account")
+    private Collection<Operation> operations;
+}
+</code></pre>
+<li>Entity Account</strong>:</li>
+<pre class="notranslate"><code>
+public class Operation {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Temporal(TemporalType.DATE)
+    private Date date;
+    private double amount;
+    @Enumerated(EnumType.STRING)
+    private OperationType type;
+    @ManyToOne
+    private Account account;
+}
+</code></pre>
+<li>Repositories</strong>:</li>
+<li>AccountRepository</strong>:</li>
+<pre class="notranslate"><code>
+public interface AccountRepository extends JpaRepository<Account,String> {
+}
+</code></pre>
+<li>OperationRepository</strong>:</li>
+<pre class="notranslate"><code>
+public interface OperationRepository extends JpaRepository<Operation,Long> {
+}
+</code></pre>
+<li>Services</strong>:</li>
+<li>AccountServiceHandler</strong>:</li>
+public class AccountServiceHandler {
+    private AccountRepository accountRepository;
+    private OperationRepository operationRepository;
+    @EventHandler
+    public void on(AccountCreatedEvent accountCreatedEvent){
+        log.info("AccountCreatedEvent ");
+        Account account =  Account
+                .builder()
+                .id(accountCreatedEvent.getId())
+                .balance(accountCreatedEvent.getInitialBalance())
+                .accountStatus(accountCreatedEvent.getAccountStatus())
+                .currency(accountCreatedEvent.getCurrency())
+                .build();
+        accountRepository.save(account);
+    }
+    @EventHandler
+    public void on(AccountActivatedEvent accountActivatedEvent){
+        log.info(" AccountActivatedEvent ");
+        Account account = accountRepository.findById(accountActivatedEvent.getId()).get();
+        account.setAccountStatus(accountActivatedEvent.getAccountStatus());
+        accountRepository.save(account);
+    }
+
+    @EventHandler
+    public void on(AccountDebitedEvent accountDebitedEvent){
+        log.info("AccountDebitedEvent ");
+        Account account = accountRepository.findById(accountDebitedEvent.getId()).get();
+        Operation operation = Operation.builder()
+                .amount(accountDebitedEvent.getAmount())
+                .date(new Date())
+                .type(OperationType.DEBIT)
+                .account(account)
+                .build();
+        operationRepository.save(operation);
+        account.setBalance(account.getBalance() - accountDebitedEvent.getAmount());
+        accountRepository.save(account);
+    }
+    @EventHandler
+    public void on(AccountCreditedEvent accountCreditedEvent){
+        log.info("AccountCreditedEvent ");
+        Account account = accountRepository.findById(accountCreditedEvent.getId()).get();
+        Operation operation = Operation.builder()
+                .amount(accountCreditedEvent.getAmount())
+                .date(new Date())
+                .type(OperationType.DEBIT)
+                .account(account)
+                .build();
+        operationRepository.save(operation);
+        account.setBalance(account.getBalance() + accountCreditedEvent.getAmount());
+        accountRepository.save(account);
+    }
+    @QueryHandler
+    public List<Account> on(GetAllAccountsQuery getAllAccountQuery){
+        return accountRepository.findAll();
+    }
+
+    @QueryHandler
+    public Account on(GetAccountByIdQuery getAccountQuery){
+        return accountRepository.findById(getAccountQuery.getId()).get();
+    }
+}
+</code></pre>
+<li>Controllers</strong>:</li>
+<li>AccountQueryController</strong>:</li>
+<pre class="notranslate">
+public class AccountQueryController {
+    private QueryGateway queryGateway;
+    @GetMapping("/allAccounts")
+    public List<Account> accountsList(){
+        List<Account> response = queryGateway.query(new GetAllAccountsQuery(), ResponseTypes.multipleInstancesOf(Account.class)).join();
+        return  response;
+    }
+    @GetMapping("/byId/{id}")
+    public Account getAccount(@PathVariable String id){
+        return queryGateway.query(new GetAccountByIdQuery(id), ResponseTypes.instanceOf(Account.class)).join();
+    }
+}
+</code></pre>
+<li>Testing Controller To get all Accounts</strong>:</li><br>
+<pre class="notranslate">
+[
+    {
+        "id": "0fdc2ea1-ce65-464b-858e-d22aa415dac2",
+        "currency": "MAD",
+        "balance": 9000.0,
+        "accountStatus": "ACTIVATED"
+    },
+    {
+        "id": "43ce2b7e-176f-462b-aecd-9656a0c6b979",
+        "currency": "MAD",
+        "balance": 67890.0,
+        "accountStatus": "ACTIVATED"
+    },
+    {
+        "id": "f2346a27-18cd-4b66-aaff-6b7c9c217913",
+        "currency": "MAD",
+        "balance": 467000.0,
+        "accountStatus": "ACTIVATED"
+    }
+]
+</code></pre><br>
+<li>Testing Controller To get  AccountBy Id</strong>:</li><br>
+<pre class="notranslate">
+{
+    "id": "b2567005-7346-430c-a83a-e7fe4353e372",
+    "currency": "MAD",
+    "balance": 9000.0,
+    "accountStatus": "ACTIVATED"
+}
+</code></pre><br>
