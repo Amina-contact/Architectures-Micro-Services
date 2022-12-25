@@ -5,42 +5,11 @@ Créer une application qui permet de gérer des comptes respectant les patterns 
 </p>
 <h3>Dependencies : </h3>
 <pre class="notranslate"><code>
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.axonframework</groupId>
-            <artifactId>axon-spring-boot-starter</artifactId>
-            <version>4.6.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.axonframework</groupId>
-                    <artifactId>axon-server-connector</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-    </dependencies> 
+   - Spring web
+   - Spring data JPA
+   - MySQL Driver
+   - Lombok
+   - Axon Framwork
 </code></pre>
 <h3>Application.properties : </h3>
 <pre class="notranslate"><code>
@@ -58,9 +27,100 @@ server.port=8082
 public abstract class BaseCommand<T> {
     @TargetAggregateIdentifier
     @Getter private T id;
-
     public BaseCommand(T id) {
         this.id = id;
     }
 } 
+</code></pre>
+<li>CreateAccountCommand</strong>:</li>
+<pre class="notranslate"><code>
+public class CreateAccountCommand extends BaseCommand<String>{
+    private double initialBalance;
+    private String currency;
+    public CreateAccountCommand(String id, double accountBalance, String currency) {
+        super(id);
+        this.initialBalance = accountBalance;
+        this.currency = currency;
+    }
+    public double getInitialBalance() {
+        return initialBalance;
+    }
+    public String getCurrency() {
+        return currency;
+    }
+}
+</code></pre>
+<li>DebitAccountCommand</strong>:</li>
+<pre class="notranslate"><code>
+public class DebitAccountCommand extends BaseCommand<String>{
+    @Getter private double debitAmount;
+    @Getter private String currency;
+    public DebitAccountCommand(String id, double debitAmount, String currency) {
+        super(id);
+        this.debitAmount = debitAmount;
+        this.currency = currency;
+    }
+} 
+</code></pre>
+<li>CreditAccountCommand</strong>:</li>
+<pre class="notranslate"><code>
+public class CreditAccountCommand extends BaseCommand<String>{
+    @Getter private double creditAmount;
+    @Getter private String currency;
+    public CreditAccountCommand(String id, double creditAmount, String currency) {
+        super(id);
+        this.creditAmount = creditAmount;
+        this.currency = currency;
+    }
+}
+</code></pre>
+<h3>Commands Controllers : </h3>
+<li>AccountCommandController</strong>:</li>
+<pre class="notranslate"><code>
+public class AccountCommandController {
+    private CommandGateway commandGateway;
+    private EventStore eventStore;
+    @PostMapping("/create")
+    public CompletableFuture<String> createAccount(@RequestBody CreateAccountRequestDTO request){
+        CompletableFuture<String> commandResponse = commandGateway.send(new CreateAccountCommand(
+                UUID.randomUUID().toString(),
+                request.getInitialBalance(),
+                request.getCurrency()
+        ));
+
+        return commandResponse;
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> exceptionHandler(Exception exception){
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(
+                exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR
+        );
+
+        return responseEntity;
+    }
+    @GetMapping("/eventStore/{accountId}")
+    public Stream eventStore(@PathVariable String accountId){
+        return eventStore.readEvents(accountId).asStream();
+    }
+
+    @PutMapping("/credit")
+    public CompletableFuture<String> creditAccount(@RequestBody CreditAccountRequestDTO creditAccountRequestDTO){
+        CompletableFuture<String> creditAccountCommandResponse = commandGateway.send(new CreditAccountCommand(
+                creditAccountRequestDTO.getAccountId(),
+                creditAccountRequestDTO.getAmount(),
+                creditAccountRequestDTO.getCurrency()
+        ));
+        return creditAccountCommandResponse;
+    }
+    @PutMapping("/debit")
+    public CompletableFuture<String> debitAccount(@RequestBody DebitAccountRequestDTO debitAccountRequestDTO){
+        CompletableFuture<String> debitAccountCommandResponse = commandGateway.send(new DebitAccountCommand(
+                debitAccountRequestDTO.getAccountId(),
+                debitAccountRequestDTO.getAmount(),
+                debitAccountRequestDTO.getCurrency()
+        ));
+
+        return debitAccountCommandResponse;
+    }
+}
 </code></pre>
