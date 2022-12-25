@@ -238,3 +238,104 @@ public class AccountDebitedEvent extends BaseEvent<String>{
     }
 }
 </code></pre>
+<h3>Aggregates : </h3>
+<li>AccountAggregate</strong>:</li>
+<pre class="notranslate"><code>
+@Aggregate
+public class AccountAggregate {
+    @AggregateIdentifier
+    private String accountId;
+    private double balance;
+    private String currency;
+    private AccountStatus status;
+    public AccountAggregate(){
+        // Required by Axon
+    }
+    @CommandHandler // Subscribe to Command Bus, and listen to the CreateAccountCommand events
+    public AccountAggregate(CreateAccountCommand createAccountCommand){
+        // Business logic Every new account well have a new aggregate
+        if(createAccountCommand.getInitialBalance() < 0) throw new RuntimeException(" Balance Negative");
+        AggregateLifecycle.apply(new AccountCreatedEvent(
+                // Command to event
+                createAccountCommand.getId(),
+                createAccountCommand.getInitialBalance(),
+                createAccountCommand.getCurrency(),
+                AccountStatus.ACTIVATED
+        ));
+    }
+    @EventSourcingHandler
+    public void on(AccountCreatedEvent accountCreatedEvent){
+        this.accountId = accountCreatedEvent.getId();
+        this.balance = accountCreatedEvent.getInitialBalance();
+        this.currency = accountCreatedEvent.getCurrency();
+        this.status = AccountStatus.CREATED;
+        AggregateLifecycle.apply(new AccountActivatedEvent(accountCreatedEvent.getId(), AccountStatus.ACTIVATED));
+    }
+    @EventSourcingHandler
+    public void on(AccountActivatedEvent accountActivatedEvent){
+        this.status = accountActivatedEvent.getAccountStatus();
+    }
+    @CommandHandler
+    public void handle(CreditAccountCommand creditAccountCommand){
+
+        if(creditAccountCommand.getCreditAmount() <= 100) throw new InsufficientCreditAmount("Credit Amount lower than 100");
+        AggregateLifecycle.apply(new AccountCreditedEvent(
+                creditAccountCommand.getId(),
+                creditAccountCommand.getCreditAmount(),
+                creditAccountCommand.getCurrency(),
+                new Date()
+        ));
+    }
+    @EventSourcingHandler
+    public void on(AccountCreditedEvent accountCreditedEvent){
+        this.balance += accountCreditedEvent.getAmount();
+    }
+
+    @CommandHandler
+    public void handler(DebitAccountCommand debitAccountCommand){
+        if(debitAccountCommand.getDebitAmount() < 0) throw new InsufficientCreditAmount("Amount can't be negative");
+        if(this.balance < debitAccountCommand.getDebitAmount()) throw new InsufficientBalanceToDebitException("Balance not sufficient");
+        AggregateLifecycle.apply(new AccountDebitedEvent(
+                debitAccountCommand.getId(),
+                debitAccountCommand.getDebitAmount(),
+                debitAccountCommand.getCurrency(),
+                new Date()
+        ));
+    }
+
+    @EventSourcingHandler
+    public void on(AccountDebitedEvent accountDebitedEvent){
+        this.balance -= accountDebitedEvent.getAmount();
+    }
+} 
+</code></pre>
+<li>Testing create account</strong>:</li>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/Test1AfterEventHandler.JPG">
+</p>
+<li>See domain_event_entry in the DataBase</strong>:</li>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/Test2.JPG">
+</p>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/Tes21.JPG">
+</p>
+<li>See the event content</strong>:</li>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/Test23.JPG">
+</p>
+<li>Consult the eventStore</strong>:</li>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/Test24AfterSream.JPG">
+</p>
+<li>Testing Credit</strong>:</li>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/TestCredit.JPG">
+</p>
+<li>Testing Debit</strong>:</li>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/TestDebit.JPG">
+</p>
+<p align="center">
+  <img src="https://github.com/Amina-contact/Architectures-Micro-Services/blob/master/Devoir%205/pictures/TestDebit2.JPG">
+</p>
